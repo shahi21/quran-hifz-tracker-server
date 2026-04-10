@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AyahStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  MEMORIZED
+  REVISED
+  WEAK
+}
+
+enum GoalType {
+  DAILY_MEMORIZATION
+  WEEKLY_MEMORIZATION
+  DAILY_STUDY_TIME
+  WEEKLY_STUDY_TIME
+}
+
+model User {
+  id                     String                   @id @default(cuid())
+  name                   String
+  email                  String                   @unique
+  passwordHash           String
+  role                   UserRole                 @default(USER)
+  timezone               String?                  @default("Asia/Calcutta")
+  preferredReminderTime  String?
+  preferredTheme         String?                  @default("light")
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  refreshTokens          RefreshToken[]
+  ayahProgress           AyahProgress[]
+  hifzSessions           HifzSession[]
+  revisionSessions       RevisionSession[]
+  goals                  Goal[]
+  dailyActivities        DailyActivity[]
+  userStat               UserStat?
+  notificationPreference NotificationPreference?
+}
+
+model RefreshToken {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenHash    String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  revokedAt    DateTime?
+  replacedById String?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Surah {
+  id             Int               @id
+  arabicName     String
+  englishName    String
+  ayahCount      Int
+  juzStart       Int
+  juzEnd         Int
+  revelationType String
+  ayahProgress   AyahProgress[]
+  revisionLogs   RevisionSession[]
+}
+
+model AyahProgress {
+  id              String     @id @default(cuid())
+  userId          String
+  surahId         Int
+  ayahNumber      Int
+  status          AyahStatus @default(NOT_STARTED)
+  dateMemorized   DateTime?
+  lastRevisedAt   DateTime?
+  revisionCount   Int        @default(0)
+  confidenceScore Int?
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  surah           Surah      @relation(fields: [surahId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, surahId, ayahNumber])
+}
+
+model HifzSession {
+  id            String   @id @default(cuid())
+  userId        String
+  sessionDate   DateTime
+  startSurahId  Int
+  startAyah     Int
+  endSurahId    Int
+  endAyah       Int
+  durationMins  Int
+  qualityRating Int?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RevisionSession {
+  id             String   @id @default(cuid())
+  userId         String
+  revisionDate   DateTime
+  surahId        Int
+  startAyah      Int
+  endAyah        Int
+  durationMins   Int
+  accuracyRating Int?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  surah          Surah    @relation(fields: [surahId], references: [id], onDelete: Restrict)
+}
+
+model Goal {
+  id              String    @id @default(cuid())
+  userId          String
+  goalType        GoalType
+  targetAyahs     Int?
+  targetMinutes   Int?
+  startDate       DateTime
+  endDate         DateTime?
+  currentProgress Int       @default(0)
+  isCompleted     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DailyActivity {
+  id               String   @id @default(cuid())
+  userId           String
+  activityDate     DateTime
+  memorizedAyahs   Int      @default(0)
+  revisedAyahs     Int      @default(0)
+  studyMinutes     Int      @default(0)
+  hifzSessionCount Int      @default(0)
+  revisionCount    Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, activityDate])
+}
+
+model UserStat {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  totalAyahsMemorized  Int      @default(0)
+  ayahsInProgress      Int      @default(0)
+  totalSessionsLogged  Int      @default(0)
+  totalRevisionsLogged Int      @default(0)
+  currentStreak        Int      @default(0)
+  longestStreak        Int      @default(0)
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationPreference {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  reminderTime   String?
+  inAppEnabled   Boolean  @default(true)
+  emailEnabled   Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
