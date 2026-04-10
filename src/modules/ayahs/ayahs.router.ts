@@ -3,7 +3,6 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
-import { normalizeToDay } from "../../utils/dates.js";
 
 const ayahSchema = z.object({
   surahId: z.number().int().min(1).max(114),
@@ -63,24 +62,8 @@ ayahsRouter.put("/progress", requireAuth, async (req, res) => {
     memDiff = -1;
   }
 
-  if (memDiff !== 0) {
-    const today = normalizeToDay(new Date());
-    await prisma.dailyActivity.upsert({
-      where: {
-        userId_activityDate: { userId: req.user!.id, activityDate: today },
-      },
-      create: {
-        userId: req.user!.id,
-        activityDate: today,
-        memorizedAyahs: memDiff > 0 ? memDiff : 0,
-        studyMinutes: 0,
-        hifzSessionCount: 0,
-      },
-      update: {
-        memorizedAyahs: { increment: memDiff },
-      },
-    });
-  }
+  // Daily memorization totals are tracked via session logging.
+  // Ayah status updates still drive lifetime memorized/in-progress stats below.
 
   const [memorizedCount, inProgressCount] = await Promise.all([
     prisma.ayahProgress.count({ where: { userId: req.user!.id, status: AyahStatus.MEMORIZED } }),
