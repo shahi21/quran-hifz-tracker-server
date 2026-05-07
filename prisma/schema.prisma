@@ -66,8 +66,20 @@ model Surah {
   juzStart       Int
   juzEnd         Int
   revelationType String
+  ayahs          Ayah[]
   ayahProgress   AyahProgress[]
   revisionLogs   RevisionSession[]
+}
+
+model Ayah {
+  id          Int    @id @default(autoincrement())
+  surahId     Int
+  ayahNumber  Int
+  arabicText  String
+  translation String
+  surah       Surah  @relation(fields: [surahId], references: [id], onDelete: Cascade)
+
+  @@unique([surahId, ayahNumber])
 }
 
 model AyahProgress {

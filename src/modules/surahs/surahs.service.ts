@@ -26,6 +26,12 @@ export async function listSurahs(userId?: string) {
 export async function getSurahById(id: number, userId?: string) {
   const surah = await prisma.surah.findUnique({
     where: { id },
+    include: {
+      ayahs: {
+        orderBy: { ayahNumber: "asc" },
+        select: { ayahNumber: true, arabicText: true, translation: true },
+      },
+    },
   });
 
   if (!surah) {
