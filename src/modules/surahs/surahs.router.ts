@@ -1,8 +1,10 @@
 import { Router } from "express";
+import { z } from "zod";
 import { requireAuth } from "../../middleware/auth.middleware.js";
 import { getSurahById, listSurahs } from "./surahs.service.js";
 
 export const surahsRouter = Router();
+const surahIdParamSchema = z.coerce.number().int().min(1).max(114);
 
 surahsRouter.get("/", requireAuth, async (req, res) => {
   const surahs = await listSurahs(req.user?.id);
@@ -10,6 +12,7 @@ surahsRouter.get("/", requireAuth, async (req, res) => {
 });
 
 surahsRouter.get("/:id", requireAuth, async (req, res) => {
-  const surah = await getSurahById(Number(req.params.id), req.user?.id);
+  const id = surahIdParamSchema.parse(req.params.id);
+  const surah = await getSurahById(id, req.user?.id);
   res.json(surah);
 });
