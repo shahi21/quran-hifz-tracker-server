@@ -12,7 +12,7 @@ Express + TypeScript API with Prisma + PostgreSQL and JWT auth.
 3. Prisma
    - `npm run prisma:generate`
    - Dev DB migration: `npm run prisma:migrate`
-   - Seed (surahs): `npm run prisma:seed`
+   - Seed (surahs + ayahs with translations): `npm run prisma:seed`
 4. Run
    - `npm run dev`
 
